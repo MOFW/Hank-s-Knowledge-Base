@@ -1,17 +1,29 @@
 # Sites deployment and MCP / Sites 部署与 MCP
 
-Create your own private Site and independent D1 and R2 resources through Sites. The hosting file declares binding names and MCP capability, and deliberately contains no project ID. Use the current Sites workflow to associate the project with your own Site; do not reuse another person's project or storage. Platform availability and provisioning have not been verified for this candidate.
+## English
 
-Set `HKB_SITE_SCOPE` to your Site ID and `HKB_MCP_SITE_ORIGIN` to the exact HTTPS origin. Generate a random setup code and its SHA-256 hash locally with:
+HKB targets a private ChatGPT Site. Access to Sites and MCP depends on account and platform permissions. Start with your own new Site; do not reuse another deployment's project ID, D1, R2 or secrets.
 
-```sh
-node -e "const {randomBytes,createHash}=require('node:crypto'); const code=randomBytes(32).toString('base64url'); console.log(code); console.log(createHash('sha256').update(code).digest('hex'))"
-```
+1. Register a private Site through the current Sites workflow. Insert the returned `project_id` into `.openai/hosting.json`, preserving `d1: DB`, `r2: BUCKET`, and the `mcp` capability. The checked-in manifest is a template and cannot associate a deployment on its own. Push the Site-specific source to that Site's source repository, build it, and deploy its matching version. Sites provisions the bindings and applies migrations before uploading the Worker. Do not run the local demo seed on the hosted database.
+2. Set `HKB_SITE_SCOPE` to the exact Site project ID and `HKB_MCP_SITE_ORIGIN` to its exact HTTPS origin. Generate a random one-time setup code and its SHA-256 hash locally:
 
-Store the hash as the Sites secret `HKB_OWNER_SETUP_CODE_HASH`. Apply all migrations to the new empty D1 through the platform deployment flow. Sign in as the Site owner at `/owner-setup` and enter the original code. Remove the setup secret and redeploy the same source; verify the owner mapping and that other users cannot read or write. Connect the Site's own plugin in ChatGPT. A Site must be behind Sites dispatch: its authenticated identity headers are trusted only at that boundary. Never expose the production worker directly with forgeable identity headers. Restrict Site access to the owner.
+   ```sh
+   node -e "const {randomBytes,createHash}=require('node:crypto'); const code=randomBytes(32).toString('base64url'); console.log(code); console.log(createHash('sha256').update(code).digest('hex'))"
+   ```
 
-`DEEPSEEK_API_KEY` is optional. Local MCP protocol testing uses a random `HKB_MCP_TOKEN` and `HKB_MCP_OWNER_SUBJECT=local_seedy`; do not reuse those development values in production. MCP can write and delete data: verify access restrictions and use a separate instance per deployment. Consult [Sites data and connections](https://learn.chatgpt.com/docs/sites/data-and-connections) and [Sites management](https://learn.chatgpt.com/docs/sites/managing-a-site) for current platform steps.
+   Store only the hash in the Sites secret `HKB_OWNER_SETUP_CODE_HASH`; deploy to apply environment changes. Keep the original code private.
+3. Sign in with the intended owner account at `/owner-setup` and enter the code. Remove the setup secret and redeploy the same version. Verify owner access and rejection of other users. Restrict the Site to the owner. Connect the Site's own MCP app in ChatGPT and verify read and write with disposable data. MCP can modify and delete data.
+4. `DEEPSEEK_API_KEY` is optional. The local MCP token and `local_seedy` identity are only for local testing. The hosted Worker must stay behind Sites dispatch, the boundary that supplies trusted identity headers; never expose it directly with forgeable identity headers.
 
-创建自己的私有 Site、独立 D1 和 R2。配置中的绑定名保留，项目 ID 由自己的平台流程关联。设置 `HKB_SITE_SCOPE` 和精确的 HTTPS `HKB_MCP_SITE_ORIGIN`，以上命令生成一次性设置码与哈希；把哈希作为 `HKB_OWNER_SETUP_CODE_HASH` 秘密配置，在新空库应用全部迁移。以 Site 所有者登录 `/owner-setup` 输入原码，完成后移除秘密并重新部署同一源码，验证 owner 映射和未授权拒绝，再连接自己的插件。生产 Worker 必须位于 Sites 分发层之后，限制访问为 owner。DeepSeek 可选。本地 MCP 凭据只用于本地测试。候选尚未在独立 Sites 资源上验证，平台步骤可能变化。
+**Verification scope:** An independent snapshot passed clean local installation, build, empty D1 migrations, startup and basic MCP read/write tests. A separate owner-private Site deployed the snapshot with only its own project ID added. Its first deployment succeeded with MCP capability, ChatGPT sign-in and one-time owner binding succeeded, and the home page showed an empty course list. Hosted MCP read/write and independent unauthorized-user rejection were not verified. Platform workflow and availability may change; consult [Sites data and connections](https://learn.chatgpt.com/docs/sites/data-and-connections) and [Sites management](https://learn.chatgpt.com/docs/sites/managing-a-site).
 
-The current Sites developer workflow registers a new private Site first, then writes the returned project ID into `.openai/hosting.json`, pushes that Site's source, builds, and deploys the matching version. A manifest without `project_id` is a template, not a deployable association. The platform's D1 migration/provisioning and owner setup have not yet been verified on a new instance; do not treat these instructions as an independently tested deployment recipe.
+## 中文
+
+HKB 面向私有 ChatGPT Site，Sites 和 MCP 的可用性取决于账号与平台权限。创建自己的独立站点、D1、R2 和秘密配置，切勿复用其他部署的项目 ID 或存储。
+
+1. 按当前 Sites 工作流创建私有站点，将返回的 `project_id` 填入 `.openai/hosting.json`，保留 `DB`、`BUCKET` 和 `mcp` 声明。仓库中的 manifest 是模板，不能自行关联站点。将站点专用源码推送到该站源码仓库，构建并部署对应版本。Sites 配置资源并在上传 Worker 前执行迁移。不要在托管数据库运行本地演示 seed。
+2. 将 `HKB_SITE_SCOPE` 设置为该站项目 ID，`HKB_MCP_SITE_ORIGIN` 设置为完整 HTTPS origin。运行上面的命令生成随机一次性设置码及 SHA-256 哈希；只将哈希写入 Sites Secret `HKB_OWNER_SETUP_CODE_HASH`，部署使配置生效，并妥善保管原码。
+3. 使用目标所有者账户登录 `/owner-setup` 并输入原码。删除设置 Secret，重新部署同一版本。验证所有者可访问及其他用户被拒绝，限制站点仅所有者访问。将该站自己的 MCP 应用连接到 ChatGPT，使用临时数据验证读写。MCP 可以修改及删除数据。
+4. `DEEPSEEK_API_KEY` 可选。本地 MCP token 与 `local_seedy` 仅供本机测试。托管 Worker 必须位于提供可信身份头的 Sites 分发层之后，不可直接暴露可伪造身份头的 Worker。
+
+**验证范围：** 独立快照已通过本地全新安装、构建、空 D1 迁移、启动及 MCP 基本读写。另建的所有者私有 Site 以该快照加自己的项目 ID 部署成功，平台报告 MCP 已启用，ChatGPT 登录与一次性 owner 绑定成功，首页显示空课程。托管 MCP 读写和另一用户的拒绝访问尚未验证。平台流程与可用性可能变化，参阅上方 Sites 官方文档。

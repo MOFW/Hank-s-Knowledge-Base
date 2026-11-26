@@ -16,4 +16,6 @@ Requires Node.js 22.13 or later and npm. For local development, run `npm run ins
 
 The application uses React, TypeScript, Vinext, Drizzle, D1 and R2. Migrations are in `drizzle/`. The bundled Sites Vite plugin retains its own [license](scripts/vite/sites-vite-plugin.LICENSE).
 
-License selection is pending author confirmation; this candidate is not yet licensed for public redistribution.
+HKB is licensed under the [MIT License](LICENSE). Third-party components retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
+
+The independent snapshot was verified locally for installation, build, empty D1 migrations, startup and basic MCP operations. A separate private Site deployed and owner sign-in succeeded; hosted MCP read/write and access rejection for another user have not been verified. See [deployment](docs/deployment.md).

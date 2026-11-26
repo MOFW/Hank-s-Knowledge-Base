@@ -16,4 +16,6 @@ HKB 是面向 ChatGPT 学习场景的个人知识库，把学习对话整理成�
 
 项目使用 React、TypeScript、Vinext、Drizzle、D1 和 R2，迁移位于 `drizzle/`。随附 Sites Vite 插件保留其[许可证](scripts/vite/sites-vite-plugin.LICENSE)。
 
-许可证选择尚待作者确认；此候选目前尚未获公开再分发许可。
+项目采用 [MIT 许可证](LICENSE)。第三方组件仍适用各自许可证，见[第三方声明](THIRD_PARTY_NOTICES.md)。
+
+独立源码快照已在本地验证安装、构建、空 D1 迁移、启动和 MCP 基本操作。独立私有 Site 已部署且所有者登录成功；托管 MCP 读写与其他用户访问拒绝尚未验证。详见[部署说明](docs/deployment.md)。
