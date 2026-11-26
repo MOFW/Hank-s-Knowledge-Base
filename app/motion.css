@@ -1,0 +1,69 @@
+:root {
+  --motion-fast: 140ms;
+  --motion-page: 200ms;
+  --motion-expand: 220ms;
+  --motion-distance: 6px;
+  --motion-ease: cubic-bezier(.2, .75, .25, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports selector(details::details-content) and (interpolate-size: allow-keywords) {
+    details:not(.quick-note, [data-instant-disclosure])::details-content {
+      interpolate-size: allow-keywords;
+      block-size: 0;
+      opacity: 0;
+      overflow: clip;
+      transition:
+        block-size var(--motion-expand) var(--motion-ease),
+        opacity var(--motion-fast) var(--motion-ease),
+        content-visibility var(--motion-expand) allow-discrete;
+    }
+    details[open]:not(.quick-note, [data-instant-disclosure])::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+    details:not([open])::details-content { pointer-events: none; }
+  }
+}
+
+@keyframes control-in {
+  from { opacity: 0; translate: 0 calc(-.65 * var(--motion-distance)); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .route-arrival { animation: route-arrive 160ms var(--motion-ease) both; }
+  .route-content-arrival { animation: route-reveal 150ms var(--motion-ease) both; }
+  @keyframes route-arrive { from { opacity: .72; translate: 0 3px; } }
+  @keyframes route-reveal { from { opacity: .75; } }
+}
+
+.button, .icon-button, .header-inner nav > a, .text-link, .home-reading-link,
+.home-reading-arrow, .activity-list a, .review-shortlist a, .workbench-courses a,
+.question-list a, .reading-outline a, .topic-neighbors a {
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    translate var(--motion-fast) var(--motion-ease);
+}
+
+.button:active, .icon-button:active, .home-reading-link:active,
+.question-list-item > a:active, .activity-list a:active { translate: 0 1px; }
+summary::after { transition: transform var(--motion-fast) var(--motion-ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-page: 0ms;
+    --motion-expand: 0ms;
+    --motion-distance: 0px;
+  }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .button:active, .icon-button:active, .home-reading-link:active,
+  .question-list-item > a:active, .activity-list a:active,
+  .home-reading-link:hover .home-reading-arrow { translate: none; }
+}

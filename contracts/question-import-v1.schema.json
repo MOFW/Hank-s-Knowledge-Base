@@ -1,0 +1,587 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hkb:question-import:1.0",
+  "title": "Hank’s Knowledge Base question import v1.0",
+  "description": "Candidate data for owner review. No database write or verification is implied by passing this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "namespace", "batch_key", "sources", "items"],
+  "properties": {
+    "schema_version": {"const":"1.0"},
+    "namespace": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "batch_key": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "sources": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"$ref":"#/$defs/source"}
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "oneOf": [
+          {"$ref":"#/$defs/createQuestion"},
+          {"$ref":"#/$defs/updateQuestion"}
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_key", "kind", "title", "occurred_on", "acquisition_status"],
+      "properties": {
+        "source_key": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "kind": {
+          "type": "string",
+          "enum": ["chat", "textbook", "ppt", "pdf", "photo", "manual", "other"]
+        },
+        "title": {"type":"string", "minLength":1, "maxLength":200},
+        "occurred_on": {
+          "anyOf": [
+            {"type":"string", "format":"date"},
+            {"type":"null"}
+          ]
+        },
+        "external_url": {
+          "anyOf": [
+            {"type":"string", "format":"uri", "pattern":"^https?://", "maxLength":2048},
+            {"type":"null"}
+          ]
+        },
+        "acquisition_status": {
+          "type": "string",
+          "enum": ["available", "partial", "unavailable"]
+        },
+        "external_id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "description": "Stable identifier from the source system, such as a conversation ID."
+        }
+      }
+    },
+    "historyMessage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "location"],
+      "properties": {
+        "role": {"type":"string", "minLength":1, "maxLength":128},
+        "location": {
+          "type":"object",
+          "additionalProperties":false,
+          "required":["digest", "entryPath", "ordinal", "conversationPath", "nodePath", "messagePath"],
+          "properties":{
+            "digest":{"type":"string", "pattern":"^[0-9a-f]{64}$"},
+            "entryPath":{"type":"string", "minLength":1, "maxLength":4096},
+            "ordinal":{"type":"integer", "minimum":0},
+            "conversationPath":{"type":"string", "maxLength":4096},
+            "nodePath":{"type":"string", "maxLength":4096},
+            "messagePath":{"type":"string", "maxLength":4096}
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_key", "locator", "quote", "speaker"],
+      "properties": {
+        "source_key": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "locator": {"type":"string", "minLength":1, "maxLength":300},
+        "quote": {"type":"string", "minLength":1, "maxLength":16384, "pattern":"\\S"},
+        "history": {"$ref":"#/$defs/historyMessage"},
+        "speaker": {
+          "type": "string",
+          "enum": ["learner", "assistant", "source_author", "unknown"]
+        }
+      }
+    },
+    "learnerEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_key", "locator", "quote", "speaker"],
+      "properties": {
+        "source_key": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "locator": {"type":"string", "minLength":1, "maxLength":300},
+        "quote": {"type":"string", "minLength":1, "maxLength":16384, "pattern":"\\S"},
+        "speaker": {"const":"learner"},
+        "history": {"$ref":"#/$defs/historyMessage"}
+      }
+    },
+    "courseRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": {
+            "id": {"type":"string", "format":"uuid"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name"],
+          "properties": {
+            "name": {"type":"string", "minLength":1, "maxLength":120}
+          }
+        }
+      ]
+    },
+    "topicRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": {
+            "id": {"type":"string", "format":"uuid"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["course_ref", "title"],
+          "properties": {
+            "course_ref": {"$ref":"#/$defs/courseRef"},
+            "title": {"type":"string", "minLength":1, "maxLength":120},
+            "chapter_path": {
+              "type": "array",
+              "maxItems": 6,
+              "items": {"type":"string", "minLength":1, "maxLength":120}
+            }
+          }
+        }
+      ]
+    },
+    "sourceText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "markdown", "evidence"],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "enum": ["quoted", "transcribed"]
+        },
+        "markdown": {"type":"string", "minLength":1, "maxLength":131072, "pattern":"\\S"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"$ref":"#/$defs/evidence"}
+        }
+      }
+    },
+    "longText": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "markdown", "evidence"],
+          "properties": {
+            "origin": {
+              "type": "string",
+              "enum": ["quoted", "transcribed", "source_summary"]
+            },
+            "markdown": {"type":"string", "minLength":1, "maxLength":131072, "pattern":"\\S"},
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {"$ref":"#/$defs/evidence"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "markdown"],
+          "properties": {
+            "origin": {"const":"ai_generated"},
+            "markdown": {"type":"string", "minLength":1, "maxLength":131072, "pattern":"\\S"}
+          }
+        }
+      ]
+    },
+    "stepBody": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "markdown", "evidence"],
+          "properties": {
+            "origin": {
+              "type": "string",
+              "enum": ["quoted", "transcribed", "source_summary"]
+            },
+            "markdown": {"type":"string", "minLength":1, "maxLength":32768, "pattern":"\\S"},
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {"$ref":"#/$defs/evidence"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "markdown"],
+          "properties": {
+            "origin": {"const":"ai_generated"},
+            "markdown": {"type":"string", "minLength":1, "maxLength":32768, "pattern":"\\S"}
+          }
+        }
+      ]
+    },
+    "stepNote": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "markdown", "evidence"],
+          "properties": {
+            "origin": {
+              "type": "string",
+              "enum": ["quoted", "transcribed", "source_summary"]
+            },
+            "markdown": {"type":"string", "minLength":1, "maxLength":16384, "pattern":"\\S"},
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {"$ref":"#/$defs/evidence"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["origin", "markdown"],
+          "properties": {
+            "origin": {"const":"ai_generated"},
+            "markdown": {"type":"string", "minLength":1, "maxLength":16384, "pattern":"\\S"}
+          }
+        }
+      ]
+    },
+    "sourceNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "markdown", "evidence"],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "enum": ["quoted", "transcribed", "source_summary"]
+        },
+        "markdown": {"type":"string", "minLength":1, "maxLength":16384, "pattern":"\\S"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"$ref":"#/$defs/evidence"}
+        }
+      }
+    },
+    "solutionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "body"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "description": "Unique within a question. Preserve across revisions and reordering."
+        },
+        "title": {"type":"string", "minLength":1, "maxLength":120},
+        "body": {"$ref":"#/$defs/stepBody"},
+        "basis": {"$ref":"#/$defs/stepNote"},
+        "strategy": {"$ref":"#/$defs/stepNote"},
+        "explanation": {"$ref":"#/$defs/sourceNote"},
+        "ai_explanation_md": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384,
+          "pattern": "\\S",
+          "description": "Supplement generated for this import, separate from explanations in the source."
+        },
+        "topic_refs": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {"$ref":"#/$defs/topicRef"}
+        }
+      }
+    },
+    "evidencedMistake": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "description_md", "evidence"],
+      "properties": {
+        "id": {"type":"string", "maxLength":64, "pattern":"^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "step_id": {"type":"string", "maxLength":64, "pattern":"^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "kind": {
+          "type": "string",
+          "enum": ["observed_learner_error", "documented_pitfall"]
+        },
+        "description_md": {"type":"string", "minLength":1, "maxLength":16384, "pattern":"\\S"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"$ref":"#/$defs/evidence"}
+        }
+      },
+      "if": {
+        "properties": {
+          "kind": {"const":"observed_learner_error"}
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {"$ref":"#/$defs/learnerEvidence"}
+          }
+        }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["external_id", "original_work"],
+      "properties": {
+        "external_id": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "original_work": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["markdown", "evidence"],
+          "properties": {
+            "markdown": {"type":"string", "minLength":1, "maxLength":131072, "pattern":"\\S"},
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {"$ref":"#/$defs/learnerEvidence"}
+            }
+          }
+        },
+        "attempted_on": {
+          "anyOf": [
+            {"type":"string", "format":"date"},
+            {"type":"null"}
+          ]
+        },
+        "attempted_at": {
+          "anyOf": [
+            {"type":"string", "format":"date-time"},
+            {"type":"null"}
+          ]
+        },
+        "error_analysis": {"$ref":"#/$defs/longText"},
+        "correction": {"$ref":"#/$defs/longText"},
+        "insight": {"$ref":"#/$defs/longText"},
+        "outcome": {
+          "type": "string",
+          "enum": ["unknown", "correct", "partial", "incorrect"],
+          "description": "Include a known outcome only when supported by outcome_evidence."
+        },
+        "outcome_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"$ref":"#/$defs/evidence"}
+        }
+      },
+      "if": {
+        "required": ["outcome"],
+        "properties": {
+          "outcome": {
+            "enum": ["correct", "partial", "incorrect"]
+          }
+        }
+      },
+      "then": {
+        "required": ["outcome_evidence"]
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_path", "status", "note"],
+      "properties": {
+        "field_path": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 256,
+          "description": "Field path relative to the question item. Use /solution_steps/<step-id>/<field> for step fields."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["missing", "unavailable", "needs_verification"]
+        },
+        "note": {"type":"string", "minLength":1, "maxLength":500}
+      }
+    },
+    "createQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "item_key", "external_id", "title", "source_keys"],
+      "properties": {
+        "item_key": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "external_id": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "title": {"type":"string", "minLength":1, "maxLength":200},
+        "statement": {"$ref":"#/$defs/sourceText"},
+        "source_keys": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+          "uniqueItems": true
+        },
+        "source_date": {
+          "anyOf": [
+            {"type":"string", "format":"date"},
+            {"type":"null"}
+          ]
+        },
+        "primary_course_ref": {
+          "anyOf": [
+            {"$ref":"#/$defs/courseRef"},
+            {"type":"null"}
+          ]
+        },
+        "topic_refs": {
+          "type": "array",
+          "maxItems": 80,
+          "items": {"$ref":"#/$defs/topicRef"}
+        },
+        "difficulty": {
+          "anyOf": [
+            {"type":"integer", "minimum":1, "maximum":5},
+            {"type":"null"}
+          ]
+        },
+        "final_answer": {"$ref":"#/$defs/longText"},
+        "key_techniques": {"$ref":"#/$defs/longText"},
+        "solution_steps": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref":"#/$defs/solutionStep"},
+          "description": "Ordered. Omit when unavailable. On update, an explicit array replaces the steps after review."
+        },
+        "evidenced_mistakes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref":"#/$defs/evidencedMistake"},
+          "description": "Evidence-backed candidates. Verification is decided by the receiving reviewer."
+        },
+        "ai_notes_md": {"type":"string", "minLength":1, "maxLength":131072, "pattern":"\\S"},
+        "gaps": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref":"#/$defs/gap"}
+        },
+        "original_asset_ids": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type":"string", "format":"uuid"},
+          "uniqueItems": true
+        },
+        "attempts": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {"$ref":"#/$defs/attempt"}
+        },
+        "operation": {"const":"create"}
+      },
+      "anyOf": [
+        {
+          "required": ["statement"]
+        },
+        {
+          "required": ["original_asset_ids"],
+          "properties": {
+            "original_asset_ids": {"type":"array", "minItems":1}
+          }
+        }
+      ]
+    },
+    "updateQuestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "item_key", "external_id", "target_id", "expected_version"],
+      "properties": {
+        "item_key": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "external_id": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+        "title": {"type":"string", "minLength":1, "maxLength":200},
+        "statement": {"$ref":"#/$defs/sourceText"},
+        "source_keys": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type":"string", "maxLength":128, "pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+          "uniqueItems": true
+        },
+        "source_date": {
+          "anyOf": [
+            {"type":"string", "format":"date"},
+            {"type":"null"}
+          ]
+        },
+        "primary_course_ref": {
+          "anyOf": [
+            {"$ref":"#/$defs/courseRef"},
+            {"type":"null"}
+          ]
+        },
+        "topic_refs": {
+          "type": "array",
+          "maxItems": 80,
+          "items": {"$ref":"#/$defs/topicRef"}
+        },
+        "difficulty": {
+          "anyOf": [
+            {"type":"integer", "minimum":1, "maximum":5},
+            {"type":"null"}
+          ]
+        },
+        "final_answer": {"$ref":"#/$defs/longText"},
+        "key_techniques": {"$ref":"#/$defs/longText"},
+        "solution_steps": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref":"#/$defs/solutionStep"},
+          "description": "Ordered. Omit when unavailable. On update, an explicit array replaces the steps after review."
+        },
+        "evidenced_mistakes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref":"#/$defs/evidencedMistake"},
+          "description": "Evidence-backed candidates. Verification is decided by the receiving reviewer."
+        },
+        "ai_notes_md": {"type":"string", "minLength":1, "maxLength":131072, "pattern":"\\S"},
+        "gaps": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref":"#/$defs/gap"}
+        },
+        "original_asset_ids": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type":"string", "format":"uuid"},
+          "uniqueItems": true
+        },
+        "operation": {"const":"propose_update"},
+        "target_id": {"type":"string", "format":"uuid"},
+        "expected_version": {"type":"integer", "minimum":1, "maximum":9007199254740991}
+      },
+      "minProperties": 6
+    }
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `questions` ADD `solution_layers_json` text;

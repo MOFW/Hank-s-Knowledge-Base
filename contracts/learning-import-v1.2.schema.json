@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hkb:learning-import:1.2",
+  "title": "Hank’s Knowledge Base learning import v1.2",
+  "description": "Question and topic candidates for owner review. Load both question-import-v1.schema.json and question-import-v1.1.schema.json to resolve shared definitions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "namespace", "batch_key", "sources", "items"],
+  "properties": {
+    "schema_version": {"const":"1.2"},
+    "namespace": {"$ref":"urn:hkb:question-import:1.0#/properties/namespace", "description":"Use chatgpt-context for visible ChatGPT excerpts with source.kind=chat and context: descriptions. Only supply source IDs, URLs and dates when known. The server rejects history evidence and history_images in this namespace."},
+    "batch_key": {"$ref":"urn:hkb:question-import:1.0#/properties/batch_key"},
+    "sources": {"$ref":"urn:hkb:question-import:1.0#/properties/sources"},
+    "items": {
+      "type":"array",
+      "minItems":1,
+      "maxItems":50,
+      "items": {
+        "description": "Use kind: topic for concept notes. Exercises use the question shape without kind; learner attempts belong inside the corresponding new question. Do not change the item type to bypass a validation error.",
+        "if": {"type":"object", "required":["kind"], "properties":{"kind":{"const":"topic"}}},
+        "then": {"$ref":"#/$defs/topic"},
+        "else": {"$ref":"urn:hkb:question-import:1.1#/$defs/question"}
+      }
+    }
+  },
+  "if": {"properties":{"namespace":{"const":"chatgpt-context"}}},
+  "then": {"properties":{"sources":{"type":"array", "items":{"type":"object", "properties":{"kind":{"const":"chat"}}}}}},
+  "$defs": {
+    "section": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["id", "kind", "content"],
+      "properties": {
+        "id": {"$ref":"urn:hkb:question-import:1.1#/$defs/anchorId"},
+        "kind": {"enum":["definition", "formula", "theorem", "proof", "intuition", "derivation", "method"]},
+        "title": {"type":"string", "maxLength":120, "pattern":"^[^\\r\\n]*\\S[^\\r\\n]*$"},
+        "content": {"$ref":"urn:hkb:question-import:1.0#/$defs/stepBody"}
+      }
+    },
+    "learnerEvidence": {
+      "type":"array", "minItems":1, "maxItems":8,
+      "items":{"$ref":"urn:hkb:question-import:1.0#/$defs/learnerEvidence"}
+    },
+    "learnerQuestion": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["id", "question_md", "evidence"],
+      "properties": {
+        "id": {"$ref":"urn:hkb:question-import:1.1#/$defs/anchorId"},
+        "question_md": {"$ref":"urn:hkb:question-import:1.1#/$defs/learnerQuestion/properties/question_md"},
+        "evidence": {"$ref":"#/$defs/learnerEvidence"}
+      }
+    },
+    "learnerMistake": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["id", "description_md", "evidence"],
+      "properties": {
+        "id": {"$ref":"urn:hkb:question-import:1.1#/$defs/anchorId"},
+        "description_md": {"$ref":"urn:hkb:question-import:1.0#/$defs/evidencedMistake/properties/description_md"},
+        "evidence": {"$ref":"#/$defs/learnerEvidence"}
+      }
+    },
+    "questionRef": {
+      "oneOf": [
+        {
+          "type":"object", "additionalProperties":false, "required":["id"],
+          "properties":{"id":{"type":"string", "format":"uuid"}}
+        },
+        {
+          "type":"object", "additionalProperties":false, "required":["item_key"],
+          "properties":{"item_key":{"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/item_key"}}
+        }
+      ],
+      "description":"A verified question UUID, or the key of a question candidate in the same batch. Commit that question before committing the topic."
+    },
+    "topic": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["kind", "operation", "item_key", "external_id"],
+      "properties": {
+        "kind": {"const":"topic"},
+        "operation": {"enum":["create", "propose_update"]},
+        "item_key": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/item_key"},
+        "external_id": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/external_id"},
+        "title": {"type":"string", "maxLength":120, "pattern":"\\S"},
+        "course_ref": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/primary_course_ref"},
+        "chapter_path": {"$ref":"urn:hkb:question-import:1.0#/$defs/topicRef/oneOf/1/properties/chapter_path"},
+        "target_id": {"$ref":"urn:hkb:question-import:1.0#/$defs/updateQuestion/properties/target_id"},
+        "expected_version": {"$ref":"urn:hkb:question-import:1.0#/$defs/updateQuestion/properties/expected_version"},
+        "summary": {"$ref":"urn:hkb:question-import:1.0#/$defs/stepNote", "description":"Optional summary. An existing nonempty summary is preserved during a note update."},
+        "sections": {"type":"array", "maxItems":32, "items":{"$ref":"#/$defs/section"}, "description":"Only the material to add, organized by section. Each entry is source-backed or explicitly AI-generated."},
+        "learner_questions": {"type":"array", "maxItems":32, "items":{"$ref":"#/$defs/learnerQuestion"}},
+        "evidenced_mistakes": {"type":"array", "maxItems":32, "items":{"$ref":"#/$defs/learnerMistake"}},
+        "related_topic_refs": {"$ref":"urn:hkb:question-import:1.0#/$defs/solutionStep/properties/topic_refs"},
+        "related_question_refs": {"type":"array", "maxItems":8, "uniqueItems":true, "items":{"$ref":"#/$defs/questionRef"}},
+        "source_keys": {"$ref":"urn:hkb:question-import:1.1#/$defs/question/properties/source_keys", "description":"Source keys actually available for the topic. Omit or use an empty array if no source is known."},
+        "ai_notes_md": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/ai_notes_md", "description":"AI explanations or hypotheses, kept distinct from the learner’s recorded statements."},
+        "gaps": {"$ref":"urn:hkb:question-import:1.1#/$defs/question/properties/gaps"}
+      },
+      "if": {"properties":{"operation":{"const":"propose_update"}}},
+      "then": {"required":["target_id", "expected_version"]},
+      "else": {"properties":{"target_id":false, "expected_version":false}}
+    }
+  }
+}

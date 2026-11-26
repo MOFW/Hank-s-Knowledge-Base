@@ -1,0 +1,13 @@
+{
+  "name": "hkb-local",
+  "compatibility_date": "2026-05-15",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hkb-local",
+      "database_id": "466c7dba-a7bc-423a-b2ac-fc8f76c91c09",
+      "migrations_dir": "../drizzle"
+    }
+  ],
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "hkb-local-files" }]
+}

@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hkb:question-import:1.1",
+  "title": "Hank’s Knowledge Base question import v1.1",
+  "description": "Candidate data for owner review. Load question-import-v1.schema.json to resolve the shared v1.0 definitions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "namespace", "batch_key", "sources", "items"],
+  "properties": {
+    "schema_version": {"const":"1.1"},
+    "namespace": {"$ref":"urn:hkb:question-import:1.0#/properties/namespace"},
+    "batch_key": {"$ref":"urn:hkb:question-import:1.0#/properties/batch_key"},
+    "sources": {"$ref":"urn:hkb:question-import:1.0#/properties/sources"},
+    "items": {
+      "type":"array",
+      "minItems":1,
+      "maxItems":50,
+      "items": {"$ref":"#/$defs/question"}
+    }
+  },
+  "$defs": {
+    "anchorId": {"type":"string", "maxLength":64, "pattern":"^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "historyImage": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["source_key", "locator", "history", "attachment_index", "sha256", "mime_type", "byte_size"],
+      "properties":{
+        "source_key":{"$ref":"urn:hkb:question-import:1.0#/$defs/evidence/properties/source_key"},
+        "locator":{"type":"string", "pattern":"^chatgpt:message:[0-9a-f]{64}@[0-9a-f]{64}$"},
+        "history":{"$ref":"urn:hkb:question-import:1.0#/$defs/historyMessage"},
+        "attachment_index":{"type":"integer", "minimum":0},
+        "sha256":{"type":"string", "pattern":"^[0-9a-f]{64}$"},
+        "mime_type":{"enum":["image/png", "image/jpeg", "image/gif", "image/webp"]},
+        "byte_size":{"type":"integer", "minimum":1, "maximum":8388608}
+      }
+    },
+    "annotation": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["id"],
+      "properties": {
+        "id": {"$ref":"#/$defs/anchorId"},
+        "label": {"type":"string", "minLength":1, "maxLength":120},
+        "basis": {"$ref":"urn:hkb:question-import:1.0#/$defs/stepNote"},
+        "strategy": {"$ref":"urn:hkb:question-import:1.0#/$defs/stepNote"},
+        "explanation": {"$ref":"urn:hkb:question-import:1.0#/$defs/sourceNote"},
+        "ai_explanation_md": {"$ref":"urn:hkb:question-import:1.0#/$defs/solutionStep/properties/ai_explanation_md"},
+        "common_mistakes": {"$ref":"urn:hkb:question-import:1.0#/$defs/sourceNote"},
+        "topic_refs": {"$ref":"urn:hkb:question-import:1.0#/$defs/solutionStep/properties/topic_refs"}
+      }
+    },
+    "solutionDocument": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["body"],
+      "properties": {
+        "body": {"$ref":"urn:hkb:question-import:1.0#/$defs/longText", "description":"Continuous Markdown and LaTeX. Optional [^hkb-ID] markers go directly after inline text or math, or in a separate paragraph immediately after a display formula. Keep the ID with its target when editing."},
+        "annotations": {"type":"array", "maxItems":32, "items":{"$ref":"#/$defs/annotation"}},
+        "step_anchor_ids": {"type":"array", "maxItems":32, "uniqueItems":true, "items":{"$ref":"#/$defs/anchorId"}}
+      }
+    },
+    "learnerQuestion": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["id", "question_md", "evidence"],
+      "properties": {
+        "id": {"$ref":"#/$defs/anchorId"},
+        "annotation_id": {"$ref":"#/$defs/anchorId"},
+        "question_md": {"type":"string", "maxLength":16384, "pattern":"\\S"},
+        "evidence": {"type":"array", "minItems":1, "maxItems":8, "items":{"$ref":"urn:hkb:question-import:1.0#/$defs/learnerEvidence"}}
+      }
+    },
+    "gap": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["field_path", "status", "note"],
+      "properties": {
+        "field_path": {"type":"string", "pattern":"^/", "maxLength":256, "description":"Relative to this item. Examples include /statement, /solution_document/body and /solution_document/annotations/<id>/basis."},
+        "status": {"$ref":"urn:hkb:question-import:1.0#/$defs/gap/properties/status"},
+        "note": {"$ref":"urn:hkb:question-import:1.0#/$defs/gap/properties/note"}
+      }
+    },
+    "question": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["operation", "item_key", "external_id"],
+      "properties": {
+        "operation": {"enum":["create", "propose_update"]},
+        "item_key": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/item_key"},
+        "external_id": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/external_id"},
+        "title": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/title"},
+        "statement": {"$ref":"urn:hkb:question-import:1.0#/$defs/sourceText"},
+        "source_keys": {
+          "type":"array",
+          "maxItems":8,
+          "items":{"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/source_keys/items"},
+          "uniqueItems":true,
+          "description":"Use an empty array if the source is unknown. A create candidate without a usable source requires verification."
+        },
+        "source_date": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/source_date"},
+        "primary_course_ref": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/primary_course_ref"},
+        "topic_refs": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/topic_refs"},
+        "difficulty": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/difficulty"},
+        "final_answer": {"$ref":"urn:hkb:question-import:1.0#/$defs/longText"},
+        "key_techniques": {"$ref":"urn:hkb:question-import:1.0#/$defs/longText"},
+        "solution_steps": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/solution_steps"},
+        "solution_document": {"$ref":"#/$defs/solutionDocument"},
+        "evidenced_mistakes": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/evidenced_mistakes"},
+        "learner_questions": {"type":"array", "maxItems":32, "items":{"$ref":"#/$defs/learnerQuestion"}},
+        "ai_notes_md": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/ai_notes_md"},
+        "gaps": {"type":"array", "maxItems":32, "items":{"$ref":"#/$defs/gap"}},
+        "original_asset_ids": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/original_asset_ids"},
+        "history_images": {"type":"array", "minItems":1, "maxItems":8, "items":{"$ref":"#/$defs/historyImage"}, "description":"Verified material package images for owner registration in review. Use asset UUIDs in original_asset_ids only after registration."},
+        "attempts": {"$ref":"urn:hkb:question-import:1.0#/$defs/createQuestion/properties/attempts"},
+        "target_id": {"$ref":"urn:hkb:question-import:1.0#/$defs/updateQuestion/properties/target_id"},
+        "expected_version": {"$ref":"urn:hkb:question-import:1.0#/$defs/updateQuestion/properties/expected_version"}
+      },
+      "if": {"properties":{"operation":{"const":"create"}}},
+      "then": {
+        "required":["title", "source_keys"],
+        "properties":{"target_id":false, "expected_version":false},
+        "anyOf":[
+          {"required":["statement"]},
+          {"required":["original_asset_ids"], "properties":{"original_asset_ids":{"type":"array", "minItems":1}}},
+          {"required":["history_images"]},
+          {
+            "required":["gaps"],
+            "properties":{"gaps":{"type":"array", "contains":{"type":"object", "required":["field_path", "status"], "properties":{"field_path":{"const":"/statement"}, "status":{"enum":["missing", "unavailable"]}}}}}
+          }
+        ]
+      },
+      "else": {
+        "required":["target_id", "expected_version"],
+        "properties":{"attempts":false},
+        "minProperties":6
+      }
+    }
+  }
+}

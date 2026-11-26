@@ -1,0 +1,132 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1794410448451,
+      "tag": "0000_catalog_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1794459518084,
+      "tag": "0001_question_bank_and_learning",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794545417305,
+      "tag": "0002_review_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794561442887,
+      "tag": "0003_structured_solutions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794563145004,
+      "tag": "0004_solution_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794583000905,
+      "tag": "0005_question_import_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794639109910,
+      "tag": "0006_topic_import_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794883730728,
+      "tag": "0007_import_task_checkpoints",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1795011656003,
+      "tag": "0008_ai_import_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1795064611429,
+      "tag": "0009_course_deletion_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1795422139996,
+      "tag": "0010_independent_content",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1795422453536,
+      "tag": "0011_management_audit",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1795423067141,
+      "tag": "0012_retain_formal_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1795531803753,
+      "tag": "0013_featured_examples",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1795534290196,
+      "tag": "0014_solution_layers",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1795582663305,
+      "tag": "0015_content_operation_undo",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1795593795765,
+      "tag": "0016_content_operation_catalog_assets",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1795669178974,
+      "tag": "0017_topic_supplement",
+      "breakpoints": true
+    }
+  ]
+}

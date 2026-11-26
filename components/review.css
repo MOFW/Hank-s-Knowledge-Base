@@ -1,0 +1,62 @@
+.review-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-block: 14px 18px;
+}
+.review-entry .empty { margin: 0; }
+.review-launch .save-error { margin-top: 8px; }
+.review-queue-note { margin-block: -8px 16px; }
+
+.review-round { width: min(100%, 760px); margin-inline: auto; }
+.review-round .crumbs a { display: inline-flex; align-items: center; gap: 6px; }
+.review-round-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px 24px;
+  margin-bottom: 18px;
+}
+.review-round-head h1 {
+  font-family: var(--serif);
+  font-size: clamp(1.65rem, 4vw, 2.4rem);
+  margin-block: 4px 0;
+  overflow-wrap: anywhere;
+  scroll-margin-top: 24px;
+}
+.review-round-management { display: flex; gap: 16px; }
+.review-round button.text-link { min-height: 44px; }
+.review-round button.text-link:disabled { opacity: .55; }
+.review-panel, .review-feedback {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: clamp(14px, 3vw, 28px);
+  background: var(--paper);
+}
+.review-work { min-width: 0; margin-top: 24px; }
+.review-work h2 { margin: 0 0 4px; }
+.review-draft { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+.review-draft .markdown-editor { grid-template-columns: minmax(0, 1fr); }
+.review-disclosure, .review-answer, .review-feedback { margin-top: 14px; }
+.review-answer {
+  border-inline-start: 2px solid var(--primary);
+  background: var(--soft);
+  padding: 14px clamp(12px, 3vw, 24px);
+}
+.review-answer h3, .review-actions h3 { margin: 0 0 12px; }
+.review-actions { margin-block: 20px 28px; }
+.review-secondary-actions { margin-top: 8px; }
+.review-assessment-options { gap: 8px; margin-block: 10px; }
+.review-assessment-options button { flex-wrap: wrap; min-height: 44px; gap: 4px 8px; }
+.review-assessment-options small { color: var(--muted); font-size: .76rem; }
+.review-schedule-options { margin-block: 10px; }
+.review-schedule-options > summary { cursor: pointer; width: fit-content; padding-block: 6px; color: var(--primary); }
+.review-schedule-options > label { display: grid; width: fit-content; gap: 4px; margin-block: 7px; }
+.question-assessment .topic-editor { padding: 8px 0 0; border: 0; background: transparent; }
+.review-cache pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 15rem; overflow: auto; }
+.review-totals { display: flex; flex-wrap: wrap; gap: 14px 32px; margin: 0 0 22px; }
+.review-totals dd { margin: 3px 0 0; font-size: 1.65rem; font-variant-numeric: tabular-nums; }
+.review-totals dt { color: var(--muted); }
